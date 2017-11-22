@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GraphSolution
+namespace Graph.Contracts
 {
     public class Graph<T>
     {
-        private Dictionary<T, Vertex<T>> Vertices;
-        private Dictionary<string, Edge<T>> Edges;
+        public Dictionary<T, Vertex<T>> Vertices;
+        public Dictionary<string, Edge<T>> Edges;
         private HashSet<T> VisitedSet;
         private int Time;
 
@@ -58,19 +58,25 @@ namespace GraphSolution
             }
         }
 
-        public void DFS()
+        public List<Vertex<T>> DFS()
         {
+            List<Vertex<T>> dfsResult = new List<Vertex<T>>();
+
             ClearVisitedSet();
 
             foreach (T key in Vertices.Keys)
             {
                 if (!VisitedSet.Contains(key))
-                    DFSUtil(key);
+                    DFSUtil(key, dfsResult);
             }
+
+            return dfsResult;
         }
 
-        public void BFS()
+        public List<Vertex<T>> BFS()
         {
+            List<Vertex<T>> bfsResult = new List<Vertex<T>>();
+
             ClearVisitedSet();
 
             Queue<T> queue = new Queue<T>();
@@ -78,15 +84,17 @@ namespace GraphSolution
             foreach (T key in Vertices.Keys)
             {
                 if (!VisitedSet.Contains(key))
-                    BFSUtil(key, queue);
+                    BFSUtil(key, queue, bfsResult);
             }
+
+            return bfsResult;
         }
 
-        public void TopologicalSort()
+        public List<Vertex<T>> TopologicalSort()
         {
             ClearVisitedSet();
 
-            Stack<T> stack = new Stack<T>();
+            Stack<Vertex<T>> stack = new Stack<Vertex<T>>();
 
             foreach (T key in Vertices.Keys)
             {
@@ -98,9 +106,11 @@ namespace GraphSolution
             {
                 Console.WriteLine(stack.Pop());
             }
+
+            return stack.ToList();
         }
 
-        private void DFSUtil(T source)
+        private void DFSUtil(T source, List<Vertex<T>> dfsResult)
         {
             VisitedSet.Add(source);
 
@@ -111,21 +121,23 @@ namespace GraphSolution
             for (int i = 0; i < Vertices[source].AdjList.Count; i++)
             {
                 if (!VisitedSet.Contains(Vertices[source].AdjList[i].Key))
-                    DFSUtil(Vertices[source].AdjList[i].Key);
+                    DFSUtil(Vertices[source].AdjList[i].Key, dfsResult);
             }
 
             Time++;
 
             Vertices[source].FinishingTime = Time;
 
-            Console.WriteLine(string.Format("{0} ({1}/{2})", source, Vertices[source].DiscoveryTime, Vertices[source].FinishingTime));
+            dfsResult.Add(Vertices[source]);
         }
 
-        private void BFSUtil(T source, Queue<T> queue)
+        private void BFSUtil(T source, Queue<T> queue, List<Vertex<T>> bfsResult)
         {
             queue.Enqueue(source);
+
             this.VisitedSet.Add(source);
-            Console.WriteLine(source);
+
+            bfsResult.Add(Vertices[source]);
 
             while (queue.Count > 0)
             {
@@ -137,13 +149,13 @@ namespace GraphSolution
                     {
                         queue.Enqueue(Vertices[vertex].AdjList[i].Key);
                         this.VisitedSet.Add(Vertices[vertex].AdjList[i].Key);
-                        Console.WriteLine(Vertices[vertex].AdjList[i].Key);
+                        bfsResult.Add(Vertices[vertex].AdjList[i]);
                     }
                 }
             }
         }
 
-        private void TopologicalSortUtil(T source, Stack<T> stack)
+        private void TopologicalSortUtil(T source, Stack<Vertex<T>> stack)
         {
             VisitedSet.Add(source);
 
@@ -153,12 +165,48 @@ namespace GraphSolution
                     TopologicalSortUtil(Vertices[source].AdjList[i].Key, stack);
             }
 
-            stack.Push(source);
+            stack.Push(Vertices[source]);
         }
 
         private void ClearVisitedSet()
         {
             this.VisitedSet.Clear();
+        }
+
+        public Graph<T> CloneGraph()
+        {
+            Graph<T> cloneGraph = new Graph<T>();
+
+            foreach (KeyValuePair<T, Vertex<T>> vertex in this.Vertices)
+            {
+                cloneGraph.AddVertex(vertex.Key);
+            }
+
+            foreach (KeyValuePair<string, Edge<T>> edge in this.Edges)
+            {
+                cloneGraph.AddEdge(edge.Value.Source, edge.Value.Destination);
+            }
+
+            return cloneGraph;
+        }
+
+        public Graph<T> ReverseGraph()
+        {
+            Graph<T> graph = CloneGraph();
+
+            List<string> keys = this.Edges.Keys.ToList();
+
+            foreach(string key in keys)
+            {
+                graph.RemoveEdge(graph.Edges[key].Source, graph.Edges[key].Destination);
+            }
+
+            foreach (KeyValuePair<string, Edge<T>> edge in this.Edges)
+            {
+                graph.AddEdge(edge.Value.Destination, edge.Value.Source);
+            }
+
+            return graph;
         }
     }
 }

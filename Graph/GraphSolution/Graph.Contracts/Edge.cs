@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GraphSolution
+namespace Graph.Contracts
 {
     public class Edge<T>
     {
